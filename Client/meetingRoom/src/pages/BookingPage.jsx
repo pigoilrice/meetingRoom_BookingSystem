@@ -1,54 +1,164 @@
 // src/pages/BookingPage.jsx
-import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const BookingPage = () => {
   const { roomId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const room = location.state?.room;
+
+  // 1. 從 Context 拿出目前登入的使用者
+  const { user } = useAuth();
+
+  // 2. 準備 State 來裝表單輸入的資料
+  const [date, setDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+  const [isSubmiting, setIsSubmiting] = useState(false);
+
+  if (!room) {
+    return (
+      <div className="container py-5 text-center">
+        <h3 className="text-danger">找不到房間資訊</h3>
+        <button className="btn btn-primary" onClick={() => navigate("/")}>
+          回首頁
+        </button>
+      </div>
+    );
+  }
+
+  // 3. 表單送出時執行的函式
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!user) {
+      alert("請先登入後再預約！");
+      navigate("/login");
+      return;
+    }
+
+    setIsSubmiting(true);
+
+    try {
+      // 打包要傳給後端的資料
+      const bookingData = {
+        roomId: room._id,
+        date: date,
+        startTime: startTime,
+        endTime: endTime,
+        userName: user.name, // 從 Context 拿
+        userEmail: user.email, // 從 Context 拿
+      };
+
+      // 呼叫我們剛寫好的後端 POST API
+      const response = await fetch("http://localhost:5000/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bookingData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert("🎉 " + data.message);
+        navigate("/my-bookings");
+      } else {
+        alert("預約失敗：" + data.message);
+      }
+    } catch (e) {
+      console.error("預約請求錯誤:", e);
+      alert("伺服器連線異常，請稍後再試...");
+    } finally {
+      setIsSubmiting(false);
+    }
+  };
 
   return (
     <div className="container py-5">
       <div className="row justify-content-center">
-        <div className="col-md-6">
-          <div className="card shadow-sm border-0 p-4">
-            <h2 className="mb-4 text-primary">填寫預約資料</h2>
-
-            {/* 這裡先印出 ID 證明我們成功把資料傳過來了 */}
-            <div className="alert alert-info">
-              您目前正在預約的房間 ID 是：<strong>{roomId}</strong>
-            </div>
-
-            <form>
-              <div className="mb-3">
-                <label className="form-label">會議名稱</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="例如：年度行銷會議"
+        <div className="col-lg-10">
+          <div className="card shadow border-0 overflow-hidden">
+            <div className="row g-0">
+              {/* 左側：房間資訊 (保持不變) */}
+              <div className="col-md-5 bg-light d-flex flex-column">
+                <img
+                  src={room.image}
+                  alt={room.name}
+                  className="img-fluid"
+                  style={{ height: "250px", objectFit: "cover" }}
                 />
-              </div>
-              <div className="mb-3">
-                <label className="form-label">選擇日期</label>
-                <input type="date" className="form-control" />
+                <div className="p-4 flex-grow-1">
+                  <h4 className="fw-bold text-primary">{room.name}</h4>
+                  <p className="text-muted mb-2">
+                    <i className="bi bi-people-fill me-2"></i>容納人數：
+                    {room.capacity} 人
+                  </p>
+                </div>
               </div>
 
-              <div className="d-grid gap-2 mt-4">
-                <button
-                  type="button"
-                  className="btn btn-success"
-                  onClick={() => navigate("/my-bookings")}
-                >
-                  確認預約 (模擬送出)
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary"
-                  onClick={() => navigate(-1)}
-                >
-                  返回上一頁
-                </button>
+              {/* 右側：填寫表單 */}
+              <div className="col-md-7 p-4 p-md-5">
+                <h3 className="mb-4 fw-bold">填寫預約資料</h3>
+
+                {/* 注意這裡：加上 onSubmit */}
+                <form onSubmit={handleSubmit}>
+                  <div className="row mb-3">
+                    <div className="col-sm-12 mb-3">
+                      <label className="form-label fw-bold">選擇日期</label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={date}
+                        onChange={(e) => setDate(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="col-sm-6">
+                      <label className="form-label fw-bold">開始時間</label>
+                      <input
+                        type="time"
+                        className="form-control"
+                        value={startTime}
+                        onChange={(e) => setStartTime(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="col-sm-6 mt-3 mt-sm-0">
+                      <label className="form-label fw-bold">結束時間</label>
+                      <input
+                        type="time"
+                        className="form-control"
+                        value={endTime}
+                        onChange={(e) => setEndTime(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="d-flex gap-2 mt-4">
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary px-4"
+                      onClick={() => navigate(-1)}
+                    >
+                      返回
+                    </button>
+                    {/* 把 type 改成 submit，並加上鎖定防呆 */}
+                    <button
+                      type="submit"
+                      className="btn btn-success flex-grow-1"
+                      disabled={isSubmiting}
+                    >
+                      {isSubmiting ? "處理中..." : "確認預約"}
+                    </button>
+                  </div>
+                </form>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>
