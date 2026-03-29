@@ -5,45 +5,47 @@ import { useAuth } from "../context/AuthContext"; // 1. 引入剛剛寫好的自
 
 const loginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState(""); // 新增 email state 來抓取輸入框的值
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const { login } = useAuth(); // 2. 從 Context 拿出 login 函式
+  const { login, register } = useAuth(); // 2. 從 Context 拿出 login 函式
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
-    // 3. 呼叫 Context 裡的 login 函式，並把輸入的 email 傳進去
-    login(email);
-    // 這裡未來會串接後端 API (例如 axios.post('/api/login'))
-    alert(isLogin ? "模擬登入成功！" : "模擬註冊成功！");
-
-    // 成功後將使用者導向首頁
-    navigate("/");
+    try {
+      if (isLogin) {
+        await login(email, password);
+        alert("🎉 登入成功！");
+        navigate("/");
+      } else {
+        await register(name, email, password);
+        alert("✅ 註冊成功！請直接登入。");
+        setIsLogin(true); // 切換回登入模式讓使用者登入
+        setPassword(""); // 清空密碼框比較安全
+      }
+    } catch (err) {
+      // 這裡會接住我們在 Context 裡拋出的 Error (例如密碼錯誤)
+      alert("❌ 發生錯誤：" + err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="container py-5">
       <div className="row justify-content-center">
         <div className="col-md-6 col-lg-4">
-          {" "}
-          {/* 登入框不需要太寬，使用 col-lg-4 剛剛好 */}
-          <div className="card shadow-sm border-0 p-4 mt-5">
-            <div className="text-center mb-4">
-              {/* 頂部 Icon */}
-              <i
-                className="bi bi-person-circle text-primary"
-                style={{ fontSize: "3rem" }}
-              ></i>
-              <h3 className="fw-bold mt-2">
-                {isLogin ? "登入系統" : "建立新帳號"}
-              </h3>
-              <p className="text-muted small">
-                {isLogin
-                  ? "歡迎回來，請輸入您的帳號密碼"
-                  : "請填寫以下資訊以開始預約會議室"}
-              </p>
-            </div>
+          <div className="card shadow border-0 rounded-3 p-4 p-md-5">
+            <h2 className="text-center fw-bold mb-4 text-primary">
+              {isLogin ? "會員登入" : "註冊帳號"}
+            </h2>
 
             <form onSubmit={handleSubmit}>
               {/* 只有在「註冊模式」時，才顯示姓名輸入框 */}
@@ -53,7 +55,9 @@ const loginPage = () => {
                     type="text"
                     className="form-control"
                     id="floatingName"
-                    placeholder="王小明"
+                    placeholder="填名字呦!"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     required
                   />
                   <label htmlFor="floatingName">姓名</label>
@@ -81,6 +85,8 @@ const loginPage = () => {
                   className="form-control"
                   id="floatingPassword"
                   placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
                 <label htmlFor="floatingPassword">密碼</label>
@@ -90,8 +96,9 @@ const loginPage = () => {
               <button
                 type="submit"
                 className="btn btn-primary w-100 py-2 fw-bold"
+                disabled={isLoading}
               >
-                {isLogin ? "登入" : "註冊"}
+                {isLoading ? "處理中..." : isLogin ? "登入" : "註冊"}
               </button>
             </form>
 

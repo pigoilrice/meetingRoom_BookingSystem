@@ -3,8 +3,6 @@ const env = require("dotenv");
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const roomRoutes = require("./routes/room");
-const bookingRoutes = require("./routes/bookings");
 
 env.config();
 const app = express();
@@ -22,8 +20,13 @@ mongoose
     console.log("Connect error...", err);
   });
 
+const roomRoutes = require("./routes/room");
+const bookingRoutes = require("./routes/bookings");
+const authRoutes = require("./routes/auth");
+
 app.use("/api/rooms", roomRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/auth", authRoutes);
 
 app.get("/", (req, res) => {
   res.send("it's good");
