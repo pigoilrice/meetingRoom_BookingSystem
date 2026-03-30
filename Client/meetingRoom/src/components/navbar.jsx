@@ -2,6 +2,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext"; // 1. 引入 useAuth
+import toast from "react-hot-toast";
 
 const Navbar = () => {
   const { user, logout } = useAuth(); // 2. 拿出 user 狀態和 logout 函式
@@ -9,6 +10,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
+    toast.success("👋 已成功登出！");
     navigate("/"); // 登出後回首頁
   };
 
@@ -43,6 +45,14 @@ const Navbar = () => {
               <li className="nav-item">
                 <Link className="nav-link" to="/my-bookings">
                   我的預約
+                </Link>
+              </li>
+            )}
+
+            {user && (
+              <li className="nav-item">
+                <Link className="nav-link" to="/admin/rooms">
+                  自訂義房間
                 </Link>
               </li>
             )}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 const myBookingPage = () => {
   const { user } = useAuth();
@@ -25,35 +26,52 @@ const myBookingPage = () => {
       return;
     }
 
+    const token = localStorage.getItem("token");
+
     // 2. 打 API 討資料 (把 email 帶在網址後面傳給後端)
-    fetch(`http://localhost:5000/api/bookings/my-bookings?email=${user.email}`)
-      .then((res) => res.json())
+    fetch(`http://localhost:5000/api/bookings/my-bookings`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+        return data;
+      })
       .then((data) => {
         setBookings(data);
         setIsLoading(false);
       })
       .catch((e) => {
         console.error("抓取預約紀錄失敗:", e);
+        // 如果失敗了，把 bookings 設定成空陣列，避免 map 崩潰白畫面！
+        setBookings([]);
         setIsLoading(false);
       });
   }, [user, navigate]);
 
   // 新增刪除函式 (handleCancel)
   const handleCancel = async (bookingId) => {
-    // 1. 溫柔的防呆確認框 (不要讓使用者誤觸)
     const isConfirmed = window.confirm("您確定要取消這筆會議室預約嗎？");
     if (!isConfirmed) return;
 
-    console.log(bookingId);
+    const token = localStorage.getItem("token");
+
     try {
       // 2. 呼叫後端的 DELETE API
       const response = await fetch(
         `http://localhost:5000/api/bookings/${bookingId}`,
-        { method: "DELETE" },
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
 
       if (response.ok) {
-        alert("✅ 預約已成功取消！");
+        toast.success("✅ 預約已成功取消！");
 
         // 3. React：過濾畫面上的資料
         // 把「被刪除的那個 ID」從 bookings 陣列中剔除，畫面就會瞬間更新！
@@ -62,15 +80,15 @@ const myBookingPage = () => {
         );
       } else {
         const data = await response.json();
-        alert("❌ 取消失敗：" + data.message);
+        toast.error("❌ 取消失敗：" + data.message);
       }
     } catch (e) {
       console.error("取消請求錯誤:", e);
-      alert("伺服器連線異常，請稍後再試。。。");
+      toast.error("伺服器連線異常，請稍後再試。。。");
     }
   };
 
-  // 🌟 新增：編輯預約相關的 3 個核心函式
+  // 新增：編輯預約相關的 3 個核心函式
   // 1. 打開 Modal，並把舊資料填入輸入框
   const openEditModal = (booking) => {
     setEditingBooking(booking);
@@ -91,12 +109,17 @@ const myBookingPage = () => {
     e.preventDefault();
     setIsUpdating(true);
 
+    const token = localStorage.getItem("token");
+
     try {
       const response = await fetch(
         `http://localhost:5000/api/bookings/${editingBooking._id}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify(editForm),
         },
       );
@@ -109,15 +132,15 @@ const myBookingPage = () => {
           prev.map((b) => (b._id === editingBooking._id ? data.booking : b)),
         );
 
-        alert("🎉 " + data.message);
+        toast.success("🎉 " + data.message);
         closeEditModal();
       } else {
         const data = await response.json();
-        alert("❌ 修改失敗：" + data.message);
+        toast.error("❌ 修改失敗：" + data.message);
       }
     } catch (err) {
       console.error("修改請求錯誤:", err);
-      alert("伺服器連線異常，請稍後再試。");
+      toast.error("伺服器連線異常，請稍後再試。");
     } finally {
       setIsUpdating(false);
     }

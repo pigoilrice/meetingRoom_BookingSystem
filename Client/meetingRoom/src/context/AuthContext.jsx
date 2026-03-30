@@ -52,8 +52,6 @@ export const AuthProvider = ({ children }) => {
 
     if (!res.ok) throw new Error(data.message);
 
-    console.log("登入成功，後端回傳的資料是：", data);
-
     localStorage.setItem("token", data.token);
     if (data.user) {
       localStorage.setItem("user", JSON.stringify(data.user));

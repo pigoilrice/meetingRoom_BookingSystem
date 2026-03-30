@@ -1,27 +1,41 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const HomePage = () => {
-  const navigate = useNavigate(); //  啟用跳轉頁面
-
-  // 1. 準備一個空陣列的 State 來裝 API 回傳的房間資料
   const [rooms, setRooms] = useState([]);
-  // 準備一個 State 來顯示「載入中」的狀態
   const [isLoading, setIsLoading] = useState(true);
+
+  const { user } = useAuth();
 
   // 2. 使用 useEffect，在畫面剛載入時去打後端 API
   useEffect(() => {
-    fetch("http://localhost:5000/api/rooms")
-      .then((res) => res.json())
-      .then((data) => {
-        setRooms(data); // 把後端給的資料存進 State
+    console.log("1. 當前登入的 User 物件是：", user);
+
+    const url = user
+      ? `http://localhost:5000/api/rooms?userId=${user.id}`
+      : "http://localhost:5000/api/rooms";
+
+    console.log("2. 準備打 API 的網址是：", url);
+
+    fetch(url)
+      .then(async (res) => {
+        const data = await res.json();
+
+        if (Array.isArray(data)) {
+          setRooms(data);
+        } else {
+          console.error("後端傳來的不是陣列喔！", data);
+          setRooms([]);
+        }
         setIsLoading(false);
       })
       .catch((e) => {
         console.log("抓取房間資料失敗：", e);
+        setRooms([]);
         setIsLoading(false);
       });
-  }, []); // 結尾的空陣列 [] 非常重要！代表「只在畫面第一次載入時執行一次」
+  }, [user]); // 把 user 加進中括號裡。這樣只要「登入」或「登出」，首頁就會自動重新撈一次資料！
 
   return (
     <div

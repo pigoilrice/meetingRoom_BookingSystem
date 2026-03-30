@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 const BookingPage = () => {
   const { roomId } = useParams();
@@ -34,7 +35,7 @@ const BookingPage = () => {
     e.preventDefault();
 
     if (!user) {
-      alert("請先登入後再預約！");
+      toast.error("請先登入後再預約！");
       navigate("/login");
       return;
     }
@@ -42,21 +43,20 @@ const BookingPage = () => {
     setIsSubmiting(true);
 
     try {
+      const token = localStorage.getItem("token");
       // 打包要傳給後端的資料
       const bookingData = {
         roomId: room._id,
         date: date,
         startTime: startTime,
         endTime: endTime,
-        userName: user.name, // 從 Context 拿
-        userEmail: user.email, // 從 Context 拿
       };
 
-      // 呼叫我們剛寫好的後端 POST API
       const response = await fetch("http://localhost:5000/api/bookings", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(bookingData),
       });
@@ -64,14 +64,14 @@ const BookingPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert("🎉 " + data.message);
+        toast.success("🎉 " + data.message);
         navigate("/my-bookings");
       } else {
-        alert("預約失敗：" + data.message);
+        toast.error("預約失敗：" + data.message);
       }
     } catch (e) {
       console.error("預約請求錯誤:", e);
-      alert("伺服器連線異常，請稍後再試...");
+      toast.error("伺服器連線異常，請稍後再試...");
     } finally {
       setIsSubmiting(false);
     }

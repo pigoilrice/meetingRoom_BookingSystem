@@ -2,6 +2,7 @@ import React from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext"; // 1. 引入剛剛寫好的自訂 Hook
+import toast from "react-hot-toast";
 
 const loginPage = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -22,17 +23,17 @@ const loginPage = () => {
     try {
       if (isLogin) {
         await login(email, password);
-        alert("🎉 登入成功！");
+        toast.success("🎉 登入成功！");
         navigate("/");
       } else {
         await register(name, email, password);
-        alert("✅ 註冊成功！請直接登入。");
+        toast.success("✅ 註冊成功！請直接登入。");
         setIsLogin(true); // 切換回登入模式讓使用者登入
         setPassword(""); // 清空密碼框比較安全
       }
     } catch (err) {
       // 這裡會接住我們在 Context 裡拋出的 Error (例如密碼錯誤)
-      alert("❌ 發生錯誤：" + err.message);
+      toast.error("❌ 發生錯誤：" + err.message);
     } finally {
       setIsLoading(false);
     }

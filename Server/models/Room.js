@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
-const roomSchema = new mongoose.Schema(
+const roomSchema = new Schema(
   {
     name: {
       type: String,
@@ -10,13 +11,21 @@ const roomSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    size: {
+      type: String,
+      required: true,
+    },
     image: {
       type: String,
       required: true,
     },
     description: {
       type: String,
-      default: "這是一間設備齊全的會議室",
+    },
+    createBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
   },
   {
