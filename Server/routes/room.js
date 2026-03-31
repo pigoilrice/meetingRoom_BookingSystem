@@ -48,4 +48,27 @@ router.post("/", authMiddleware, async (req, res) => {
   }
 });
 
+router.delete("/:id", authMiddleware, async (req, res) => {
+  try {
+    const room = await Room.findById(req.params.id);
+
+    if (!room) return res.status(404).json({ message: "找不到這間會議室！" });
+
+    if (!room.createBy) {
+      return res
+        .status(403)
+        .json({ message: "這是系統預設的公共會議室，無法刪除！" });
+    }
+
+    if (room.createBy.toString() !== req.user.id)
+      return res.status(403).json({ message: "您沒有權限刪除別人的會議室！" });
+
+    await Room.findByIdAndDelete(req.params.id);
+    res.json({ message: "會議室已成功刪除！" });
+  } catch (e) {
+    console.error("刪除房間失敗：", e);
+    res.status(500).json({ message: "伺服器發生錯誤，無法刪除會議室" });
+  }
+});
+
 module.exports = router;

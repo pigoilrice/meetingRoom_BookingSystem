@@ -1,22 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
 
 const HomePage = () => {
   const [rooms, setRooms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   const { user } = useAuth();
 
   // 2. 使用 useEffect，在畫面剛載入時去打後端 API
   useEffect(() => {
-    console.log("1. 當前登入的 User 物件是：", user);
-
     const url = user
       ? `http://localhost:5000/api/rooms?userId=${user.id}`
       : "http://localhost:5000/api/rooms";
-
-    console.log("2. 準備打 API 的網址是：", url);
 
     fetch(url)
       .then(async (res) => {
@@ -25,7 +23,6 @@ const HomePage = () => {
         if (Array.isArray(data)) {
           setRooms(data);
         } else {
-          console.error("後端傳來的不是陣列喔！", data);
           setRooms([]);
         }
         setIsLoading(false);
@@ -36,6 +33,35 @@ const HomePage = () => {
         setIsLoading(false);
       });
   }, [user]); // 把 user 加進中括號裡。這樣只要「登入」或「登出」，首頁就會自動重新撈一次資料！
+
+  const handleDeleteRoom = async (roomId) => {
+    const isConfirmed = window.confirm(
+      "確定要拆除這間會議室嗎？此動作無法復原喔！",
+    );
+    if (!isConfirmed) return;
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/rooms/${roomId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success(data.message);
+        setRooms((prev) => prev.filter((room) => room._id !== roomId));
+      } else {
+        toast.error("❌ " + data.message);
+      }
+    } catch (e) {
+      toast.error("伺服器連線異常，刪除失敗");
+    }
+  };
 
   return (
     <div
@@ -81,6 +107,15 @@ const HomePage = () => {
                   >
                     立即預約
                   </button>
+
+                  {user && room.createdBy === user._id && (
+                    <button
+                      className="btn btn-sm btn-outline-danger ms-2"
+                      onClick={() => handleDeleteRoom(room._id)}
+                    >
+                      <i className="bi bi-trash"></i> 刪除
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

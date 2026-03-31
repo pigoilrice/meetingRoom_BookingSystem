@@ -10,6 +10,18 @@ router.post("/", authMiddleware, async (req, res) => {
     // 從前端收到的資料
     const { roomId, date, startTime, endTime } = req.body;
 
+    const conflictBooking = await Booking.findOne({
+      room: roomId,
+      date: date,
+      $and: [{ startTime: { $lt: endTime } }, { endTime: { $gt: startTime } }],
+    });
+
+    if (conflictBooking) {
+      return res.status(400).json({
+        message: `預約衝突！該時段 (${conflictBooking.startTime} - ${conflictBooking.endTime}) 已被他人預約。`,
+      });
+    }
+
     const newBooking = new Booking({
       user: req.user.id,
       room: roomId,
@@ -48,30 +60,48 @@ router.put("/:id", authMiddleware, async (req, res) => {
   try {
     // 1. 從前端收到的新資料 (使用者想改成哪天、幾點)
     const { date, startTime, endTime } = req.body;
+    const bookingId = req.params.id;
 
-    // 2. 使用 Mongoose 來更新
-    const updateBooking = await Booking.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        user: req.user.id,
-      },
-      {
-        date: date,
-        startTime: startTime,
-        endTime: endTime,
-      },
-      { returnDocument: "after" }, // 告訴 MongoDB「請回傳更新後的最新資料給我」，而不是舊資料
-    ).populate("room");
+    const existingBooking = await Booking.findOne({
+      _id: bookingId,
+      user: req.user.id,
+    });
 
-    if (!updateBooking) {
+    if (!existingBooking) {
       return res
-        .status(400)
+        .status(404)
         .json({ message: "找不到此預約，或您沒有權限修改這筆預約！" });
     }
 
+    // 2. 使用 Mongoose 來更新
+    const conflictBooking = await Booking.findOne({
+      room: existingBooking.room,
+      date,
+      _id: { $ne: bookingId },
+      $and: [
+        {
+          startTime: { $lt: endTime },
+          endTime: { $gt: startTime },
+        },
+      ],
+    });
+
+    if (conflictBooking) {
+      return res.status(400).json({
+        message: `修改失敗！該時段 (${conflictBooking.startTime} - ${conflictBooking.endTime}) 已有其他預約。`,
+      });
+    }
+
+    existingBooking.date = date;
+    existingBooking.startTime = startTime;
+    existingBooking.endTime = endTime;
+
+    await existingBooking.save();
+    await existingBooking.populate("room");
+
     // 3. 回傳成功訊息與更新後的訂單
-    res.json({ message: "預約時間修改成功！", booking: updateBooking });
-  } catch (e) {
+    res.json({ message: "預約時間修改成功！", booking: existingBooking });
+  } catch (err) {
     console.error("修改預約失敗：", err);
     res.status(500).json({ message: "伺服器發生錯誤，無法修改預約" });
   }
