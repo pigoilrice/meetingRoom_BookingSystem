@@ -8,6 +8,7 @@ const seedRooms = [
   {
     name: "會議室 A (大型)",
     capacity: 12,
+    size: "大",
     image:
       "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=500",
     description: "配備頂級投影設備與視訊會議系統，適合大型團隊會議或客戶提案。",
@@ -15,6 +16,7 @@ const seedRooms = [
   {
     name: "創意空間 (中型)",
     capacity: 8,
+    size: "中",
     image:
       "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=500",
     description: "備有大面積白板牆，環境輕鬆，適合腦力激盪與小組討論。",
@@ -22,6 +24,7 @@ const seedRooms = [
   {
     name: "面試間 (小型)",
     capacity: 4,
+    size: "小",
     image:
       "https://images.unsplash.com/photo-1505409859467-3a799c240121?auto=format&fit=crop&w=500",
     description: "安靜具隱私性，適合 1 對 1 面試或少人數的機密會議。",
