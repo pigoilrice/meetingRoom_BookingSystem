@@ -29,7 +29,7 @@ const myBookingPage = () => {
     const token = localStorage.getItem("token");
 
     // 2. 打 API 討資料 (把 email 帶在網址後面傳給後端)
-    fetch(`http://localhost:5000/api/bookings/my-bookings`, {
+    fetch(`${import.meta.env.VITE_API_URL}/api/bookings/my-bookings`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -61,7 +61,7 @@ const myBookingPage = () => {
     try {
       // 2. 呼叫後端的 DELETE API
       const response = await fetch(
-        `http://localhost:5000/api/bookings/${bookingId}`,
+        `${import.meta.env.VITE_API_URL}/api/bookings/${bookingId}`,
         {
           method: "DELETE",
           headers: {
@@ -113,7 +113,7 @@ const myBookingPage = () => {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/api/bookings/${editingBooking._id}`,
+        `${import.meta.env.VITE_API_URL}/api/bookings/${editingBooking._id}`,
         {
           method: "PUT",
           headers: {

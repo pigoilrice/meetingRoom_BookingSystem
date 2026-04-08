@@ -52,14 +52,17 @@ const BookingPage = () => {
         endTime: endTime,
       };
 
-      const response = await fetch("http://localhost:5000/api/bookings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/bookings`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(bookingData),
         },
-        body: JSON.stringify(bookingData),
-      });
+      );
 
       const data = await response.json();
 

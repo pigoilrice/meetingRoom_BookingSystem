@@ -27,11 +27,14 @@ export const AuthProvider = ({ children }) => {
 
   // 實際註冊API
   const register = async (name, email, password) => {
-    const res = await fetch("http://localhost:5000/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
-    });
+    const res = await fetch(
+      `${import.meta.env.VITE_API_URL}/api/auth/register`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      },
+    );
 
     const data = await res.json();
 
@@ -42,7 +45,7 @@ export const AuthProvider = ({ children }) => {
   // 真實登入API
   const login = async (email, password) => {
     // 實務上這裡會打 API 給後端，拿到 token 和 user data
-    const res = await fetch("http://localhost:5000/api/auth/login", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),

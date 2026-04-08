@@ -13,8 +13,8 @@ const HomePage = () => {
   // 2. 使用 useEffect，在畫面剛載入時去打後端 API
   useEffect(() => {
     const url = user
-      ? `http://localhost:5000/api/rooms?userId=${user.id}`
-      : "http://localhost:5000/api/rooms";
+      ? `${import.meta.env.VITE_API_URL}/api/rooms?userId=${user.id}`
+      : `${import.meta.env.VITE_API_URL}/api/rooms`;
 
     fetch(url)
       .then(async (res) => {
@@ -43,12 +43,15 @@ const HomePage = () => {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch(`http://localhost:5000/api/rooms/${roomId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/rooms/${roomId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      });
+      );
 
       const data = await res.json();
 
