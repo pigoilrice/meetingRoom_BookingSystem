@@ -124,6 +124,8 @@ const BookingPage = () => {
                         className="form-control"
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
+                        min={"08:00"}
+                        max={"16:30"}
                         required
                       />
                     </div>
@@ -134,6 +136,8 @@ const BookingPage = () => {
                         className="form-control"
                         value={endTime}
                         onChange={(e) => setEndTime(e.target.value)}
+                        min={"08:30"}
+                        max={"17:00"}
                         required
                       />
                     </div>

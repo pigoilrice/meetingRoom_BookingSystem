@@ -10,6 +10,18 @@ router.post("/", authMiddleware, async (req, res) => {
     // 從前端收到的資料
     const { roomId, date, startTime, endTime } = req.body;
 
+    if (startTime < "08:00" || endTime > "17:00") {
+      return res
+        .status(400)
+        .json({ message: "無效的時間！會議室開放時間為 08:00 到 17:00。" });
+    }
+
+    if (startTime >= endTime) {
+      return res.status(400).json({
+        message: "結束時間必須晚於開始時間！",
+      });
+    }
+
     const conflictBooking = await Booking.findOne({
       room: roomId,
       date: date,
